@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    /* --- Configurações Essenciais do Projeto --- */
+    "target": "ES2020", // Define a versão do JavaScript gerado (moderno e compatível)
+    "module": "CommonJS", // Essencial para o Jest, que roda em ambiente Node.js
+    "lib": ["ES2020", "DOM"], // Bibliotecas padrão disponíveis
+    "outDir": "./dist", // Onde o JavaScript compilado será salvo
+    "rootDir": "./src", // Diretório raiz dos seus arquivos TypeScript
+
+    /* --- Checagem de Tipo Rigorosa --- */
+    "strict": true, // Habilita todas as opções de verificação de tipo estritas
+    "noImplicitAny": true, // Exige anotação de tipo para 'any' implícito
+    "strictNullChecks": true, // Trata 'null' e 'undefined' de forma mais segura
+
+    /* --- Resolução de Módulos --- */
+    "moduleResolution": "node", // Como o TS procura por módulos
+    "baseUrl": ".", // Define a base para caminhos relativos
+    "paths": {
+      // Permite criar aliases para importações (ex: @/components/*)
+      "@/*": ["src/*"]
+    },
+    "esModuleInterop": true, // Melhora a compatibilidade entre módulos CommonJS e ES Modules
+    "resolveJsonModule": true, // Permite importar arquivos .json diretamente
+
+    /* --- Configurações Adicionais --- */
+    "skipLibCheck": true, // Pula a verificação de tipos em arquivos de declaração (.d.ts)
+    "forceConsistentCasingInFileNames": true, // Garante que os nomes dos arquivos sejam consistentes
+    "jsx": "react-jsx", // Essencial se você estiver usando React
+    "sourceMap": true, // Gera arquivos .map para facilitar o debug
+
+    /* --- Opções Específicas para Jest --- */
+    "types": ["node", "jest"] // Inclui as tipagens globais do Node.js e do Jest
+  },
+  "include": [
+    "src/**/*" // Quais arquivos o TypeScript deve compilar
+  ],
+  "exclude": [
+    "node_modules", // Pastas a serem ignoradas
+    "dist"
+  ]
+}

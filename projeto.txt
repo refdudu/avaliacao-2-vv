@@ -1,0 +1,5 @@
+Inventário de produtos
+- Criar produtos
+- Adicionar quantidade
+- Remover quantidade
+- Buscar produtos
