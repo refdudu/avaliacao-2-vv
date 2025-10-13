@@ -1,3 +1,6 @@
+import { InventoryManager } from "./InventoryManager";
+import { ProductDTO } from "./Product";
+
 describe("Gerenciamento de inventário", () => {
   let inventoryManager: InventoryManager;
   beforeEach(() => {
