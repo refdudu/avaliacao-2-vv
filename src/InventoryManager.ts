@@ -1,15 +1,15 @@
-import { randomUUID } from "node:crypto";
 import { Product, ProductDTO } from "./Product";
 
 export class InventoryManager {
   private products: Product[] = [];
 
-  createProduct(product: ProductDTO) {
-    const _product: Product = { ...product, id: randomUUID() };
-    this.products.push(_product);
+  createProduct(productDTO: ProductDTO): Product {
+    const newProduct = new Product(productDTO);
+    this.products.push(newProduct);
+    return newProduct;
   }
 
-  getProducts() {
+  getProducts(): Product[] {
     return this.products;
   }
 }
