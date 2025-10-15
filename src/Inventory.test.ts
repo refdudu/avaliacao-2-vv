@@ -22,4 +22,13 @@ describe("Gerenciamento de inventário", () => {
     expect(items[0].quantity).toBe(quantity);
     expect(items[0].price).toBe(price);
   });
+
+  it("adiciona quantidade a um produto existente", () => {
+  const productDTO: ProductDTO = { name: "Produto A", price: 100, quantity: 10 };
+  const createdProduct = inventoryManager.createProduct(productDTO);
+  const quantityToAdd = 5;
+  inventoryManager.addProductQuantity(createdProduct.id, quantityToAdd);
+  const product = inventoryManager.findProductById(createdProduct.id);
+  expect(product?.quantity).toBe(productDTO.quantity + quantityToAdd);
+});
 });
