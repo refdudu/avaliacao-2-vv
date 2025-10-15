@@ -1,23 +1,32 @@
 import { Product, ProductDTO } from "./Product";
+import { ProductNotFoundError } from "./ProductNotFoundError";
 
 export class InventoryManager {
-  private products: Product[] = [];
-  findProductById(id: string): Product {
-    const product = this.products.find((p) => p.id === id);
-    if (!product) throw new Error("Product not found");
-    return product;
-  }
-  addProductQuantity(id: string, quantityToAdd: number): void {
-    const product = this.findProductById(id);
-    product.quantity += quantityToAdd;
-  }
+  private products: Map<string, Product> = new Map();
+
   createProduct(productDTO: ProductDTO): Product {
     const newProduct = new Product(productDTO);
-    this.products.push(newProduct);
+    this.products.set(newProduct.id, newProduct);
     return newProduct;
   }
 
+  findProductById(id: string): Product {
+    const product = this.products.get(id);
+    if (!product) {
+      throw new ProductNotFoundError();
+    }
+    return product;
+  }
+
+  addProductQuantity(id: string, quantityToAdd: number): void {
+    if (quantityToAdd <= 0) {
+      throw new Error("A quantidade a ser adicionada deve ser um número positivo.");
+    }
+    const product = this.findProductById(id);
+    product.addQuantity(quantityToAdd);
+  }
+
   getProducts(): Product[] {
-    return this.products;
+    return Array.from(this.products.values());
   }
 }

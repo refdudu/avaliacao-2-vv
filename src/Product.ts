@@ -6,12 +6,8 @@ export interface ProductDTO {
   quantity: number;
 }
 
-export interface IProduct extends ProductDTO {
-  id: string;
-}
-
-export class Product implements IProduct {
-  id: string;
+export class Product {
+  readonly id: string;
   name: string;
   price: number;
   quantity: number;
@@ -21,5 +17,9 @@ export class Product implements IProduct {
     this.name = productDTO.name;
     this.price = productDTO.price;
     this.quantity = productDTO.quantity;
+  }
+
+  addQuantity(quantity: number): void {
+    this.quantity += quantity;
   }
 }
