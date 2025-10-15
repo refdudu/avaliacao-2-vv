@@ -22,4 +22,8 @@ export class Product implements IProduct {
     this.price = productDTO.price;
     this.quantity = productDTO.quantity;
   }
+
+  addQuantity(amount: number): void {
+    this.quantity += amount;
+  }
 }
