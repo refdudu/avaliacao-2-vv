@@ -6,15 +6,11 @@ export interface ProductDTO {
   quantity: number;
 }
 
-export interface IProduct extends ProductDTO {
-  id: string;
-}
-
-export class Product implements IProduct {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
+export class Product implements ProductDTO {
+  public readonly id: string; 
+  public name: string;
+  public price: number;
+  public quantity: number;
 
   constructor(productDTO: ProductDTO) {
     this.id = randomUUID();
