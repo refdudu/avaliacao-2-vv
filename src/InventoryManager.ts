@@ -24,8 +24,11 @@ export class InventoryManager {
   getProducts(): Product[] {
     return [...this.products];
   }
-  deleteProduct(id: string): void {
-    const product = this.findProductById(id);
-    this.products = this.products.filter((p) => p.id !== product.id);
+  deleteProduct(productId: string): void {
+    if (this.productExists(productId))
+      this.products = this.products.filter((p) => p.id !== productId);
+  }
+  private productExists(productId: string): boolean {
+    return this.products.some((p) => p.id === productId);
   }
 }
