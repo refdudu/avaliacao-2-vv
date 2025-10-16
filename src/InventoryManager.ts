@@ -2,7 +2,7 @@ import { ProductNotFoundError } from "./errors/ProductNotFoundError";
 import { Product, ProductDTO } from "./Product";
 
 export class InventoryManager {
-  private products: Product[] = [];
+  constructor(private products: Product[] = []) {}
   findProductById(id: string): Product {
     const product = this.products.find((p) => p.id === id);
     if (!product) throw new ProductNotFoundError();
@@ -18,10 +18,10 @@ export class InventoryManager {
     return newProduct;
   }
   getProducts(): Product[] {
-    return this.products;
+    return [...this.products];
   }
   deleteProduct(id: string): void {
-    const _p = this.findProductById(id);
-    this.products = [...this.products.filter((p) => p.id !== _p.id)];
+    const product = this.findProductById(id);
+    this.products = this.products.filter((p) => p.id !== product.id);
   }
 }
