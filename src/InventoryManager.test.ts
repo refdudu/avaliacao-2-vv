@@ -52,4 +52,16 @@ describe("Gerenciamento de inventário", () => {
       ProductNotFoundError
     );
   });
+  it("remover quantidade de produto existente", () => {
+    const productDTO: ProductDTO = {
+      name: "Produto A",
+      price: 100,
+      quantity: 10,
+    };
+    const createdProduct = inventoryManager.createProduct(productDTO);
+    const quantityToRemove = 5;
+    inventoryManager.removeProductQuantity(createdProduct.id, quantityToRemove);
+    const product = inventoryManager.findProductById(createdProduct.id);
+    expect(product?.quantity).toBe(productDTO.quantity - quantityToRemove);
+  });
 });
