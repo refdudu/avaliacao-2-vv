@@ -17,8 +17,11 @@ export class InventoryManager {
     this.products.push(newProduct);
     return newProduct;
   }
-
   getProducts(): Product[] {
     return this.products;
   }
+  deleteProduct(id: string): void {
+    const _p = this.findProductById(id);
+    this.products = [...this.products.filter((p) => p.id !== _p.id)];
+  }
 }
