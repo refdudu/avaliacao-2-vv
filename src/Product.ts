@@ -26,4 +26,8 @@ export class Product implements IProduct {
   addQuantity(amount: number): void {
     this.quantity += amount;
   }
+
+  removeQuantity(amount: number): void {
+    this.quantity -= amount;
+  }
 }

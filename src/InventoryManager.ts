@@ -12,6 +12,10 @@ export class InventoryManager {
     const product = this.findProductById(id);
     product.addQuantity(quantityToAdd);
   }
+  removeProductQuantity(id: string, quantityToRemove: number): void {
+    const product = this.findProductById(id);
+    product.removeQuantity(quantityToRemove); 
+  }
   createProduct(productDTO: ProductDTO): Product {
     const newProduct = new Product(productDTO);
     this.products.push(newProduct);
