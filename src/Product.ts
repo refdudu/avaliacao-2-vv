@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { InsufficientStockError } from "./errors/InsufficientStockError";
 
 export interface ProductDTO {
   name: string;
@@ -27,7 +28,10 @@ export class Product implements IProduct {
     this.quantity += amount;
   }
 
-  removeQuantity(amount: number): void {
+removeQuantity(amount: number): void {
+    if (amount > this.quantity) {
+      throw new InsufficientStockError();
+    }
     this.quantity -= amount;
   }
 }
