@@ -28,4 +28,9 @@ export class InventoryManager {
     const product = this.findProductById(id);
     this.products = this.products.filter((p) => p.id !== product.id);
   }
+searchProducts({ name }: { name: string }) {
+    return this.products.filter((p) =>
+      p.name.trim().toLowerCase().includes(name.trim().toLowerCase())
+    );
+  }
 }
