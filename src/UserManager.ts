@@ -7,7 +7,13 @@ export class UserManager {
     this.users.push(newUser);
     return newUser;
   }
-  getUsers() {
+  getUsers({ name }: { name?: string } = {}): IUser[] {
+    if (name) {
+      const searchTerm = name.trim().toLowerCase();
+      return this.users.filter((user) =>
+        user.name.trim().toLowerCase().includes(searchTerm)
+      );
+    }
     return [...this.users];
   }
 }
