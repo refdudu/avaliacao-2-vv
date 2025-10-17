@@ -1,5 +1,6 @@
 import { ProductNotFoundError } from "./errors/ProductNotFoundError";
 import { Product, ProductDTO } from "./Product";
+import { normalizeString } from "./normalizeString";
 
 export class InventoryManager {
   constructor(private products: Product[] = []) {}
@@ -27,5 +28,13 @@ export class InventoryManager {
   deleteProduct(id: string): void {
     const product = this.findProductById(id);
     this.products = this.products.filter((p) => p.id !== product.id);
+  }
+  searchProducts({ name }: { name: string }) {
+    const _name = normalizeString(name);
+    if (!_name) return this.getProducts();
+    
+    return this.getProducts().filter((p) =>
+      normalizeString(p.name).includes(normalizeString(name))
+    );
   }
 }
