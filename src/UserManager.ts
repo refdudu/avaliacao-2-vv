@@ -1,19 +1,27 @@
+import { normalizeString } from "./normalizeString";
 import { IUser, User, UserDTO } from "./User";
+
+interface GetUserFilter {
+  name?: string;
+}
 
 export class UserManager {
   constructor(private users: IUser[] = []) {}
+
   createUser(userDTO: UserDTO) {
     const newUser = new User(userDTO);
     this.users.push(newUser);
     return newUser;
   }
-  getUsers({ name }: { name?: string } = {}): IUser[] {
-    if (name) {
-      const searchTerm = name.trim().toLowerCase();
-      return this.users.filter((user) =>
-        user.name.trim().toLowerCase().includes(searchTerm)
-      );
+
+  getUsers({ name }: GetUserFilter = {}): IUser[] {
+    if (!name) {
+      return [...this.users];
     }
-    return [...this.users];
+
+    const normalizedName = normalizeString(name);
+    return this.users.filter((user) =>
+      normalizeString(user.name).includes(normalizedName)
+    );
   }
 }
