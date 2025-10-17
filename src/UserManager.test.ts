@@ -1,3 +1,6 @@
+import { UserDTO } from "./User";
+import { UserManager } from "./UserManager";
+
 describe("Gerenciamento de usuários", () => {
   let userManager: UserManager;
   beforeEach(() => {
