@@ -20,4 +20,13 @@ describe("Gerenciamento de usuários", () => {
     expect(items[0].name).toBe(newUser.name);
     expect(items[0].id).toBe(newUser.id);
   });
+
+  it("deve buscar usuários pelo nome usando um objeto de filtro", () => {
+    userManager.createUser({ name: "Renan Eduardo" });
+    userManager.createUser({ name: "Felipe Alves" });
+
+    const foundUsers = userManager.getUsers({ name: "Renan" });
+    expect(foundUsers).toHaveLength(1);
+    expect(foundUsers[0].name).toBe("Renan Eduardo");
+  });
 });
