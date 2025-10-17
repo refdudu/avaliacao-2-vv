@@ -80,4 +80,38 @@ describe("Gerenciamento de inventário", () => {
       )
     ).toThrow(InsufficientStockError);
   });
+  
+  it("buscar produto pelo nome", () => {
+    const noProducts = inventoryManager.searchProducts({ name: "" });
+    expect(noProducts).toHaveLength(0);
+
+    const productA: ProductDTO = {
+      name: "Mouse",
+      price: 100,
+      quantity: 10,
+    };
+    inventoryManager.createProduct(productA);
+
+    const productB: ProductDTO = {
+      name: "Teclado",
+      price: 200,
+      quantity: 5,
+    };
+    inventoryManager.createProduct(productB);
+
+    const foundProducts = inventoryManager.searchProducts({ name: "Mou" });
+    expect(foundProducts).toHaveLength(1);
+    expect(foundProducts[0].name).toBe("Mouse");
+
+    const foundProductsCaseInsensitive = inventoryManager.searchProducts({
+      name: "teC",
+    });
+    expect(foundProductsCaseInsensitive).toHaveLength(1);
+    expect(foundProductsCaseInsensitive[0].name).toBe("Teclado");
+
+    const notFoundProducts = inventoryManager.searchProducts({
+      name: "Monitor",
+    });
+    expect(notFoundProducts).toHaveLength(0);
+  });
 });
