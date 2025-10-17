@@ -1,3 +1,4 @@
+import { InsufficientStockError } from "./errors/InsufficientStockError";
 import { ProductNotFoundError } from "./errors/ProductNotFoundError";
 import { InventoryManager } from "./InventoryManager";
 import { ProductDTO } from "./Product";
@@ -63,5 +64,20 @@ describe("Gerenciamento de inventário", () => {
     inventoryManager.removeProductQuantity(createdProduct.id, quantityToRemove);
     const product = inventoryManager.findProductById(createdProduct.id);
     expect(product?.quantity).toBe(productDTO.quantity - quantityToRemove);
+  });
+  it("remover quantidade maior que a disponível lança erro", () => {
+    const productDTO: ProductDTO = {
+      name: "Produto A",
+      price: 100,
+      quantity: 10,
+    };
+    const createdProduct = inventoryManager.createProduct(productDTO);
+    const quantityToRemove = 15;
+    expect(() =>
+      inventoryManager.removeProductQuantity(
+        createdProduct.id,
+        quantityToRemove
+      )
+    ).toThrow(InsufficientStockError);
   });
 });
