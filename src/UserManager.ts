@@ -7,7 +7,7 @@ interface GetUserFilter {
 }
 
 export class UserManager {
-  constructor(private users: IUser[] = []) { }
+  constructor(private users: IUser[] = []) {}
 
   createUser(userDTO: UserDTO) {
     const newUser = new User(userDTO);
@@ -34,6 +34,16 @@ export class UserManager {
     try {
       this.getUserById(userId);
       this.users = this.getUsers().filter(({ id }) => id !== userId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  setUserProducts(userId: string, products: any[]) {
+    try {
+      const user = this.getUserById(userId);
+      user.products = products;
       return true;
     } catch {
       return false;
