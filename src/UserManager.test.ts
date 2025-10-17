@@ -29,8 +29,8 @@ describe("Gerenciamento de usuários", () => {
     expect(foundUsers).toHaveLength(1);
     expect(foundUsers[0].name).toBe("Renan Eduardo");
   });
-  
-    it("deve deletar um usuário existente pelo id", () => {
+
+  it("deve deletar um usuário existente pelo id", () => {
     const userA = userManager.createUser({ name: "Usuário A" });
     const userB = userManager.createUser({ name: "Usuário B" });
 
@@ -40,5 +40,9 @@ describe("Gerenciamento de usuários", () => {
     expect(result).toBe(true);
     expect(usersAfterDelete).toHaveLength(1);
     expect(usersAfterDelete[0].id).toBe(userB.id);
+  });
+  it("deve tentar deletar um usuário inexistente", () => {
+    const result = userManager.deleteUser("non-existent-id");
+    expect(result).toBe(false);
   });
 });
