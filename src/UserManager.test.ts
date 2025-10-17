@@ -57,4 +57,14 @@ describe("Gerenciamento de usuários", () => {
     const result = userManager.setUserProducts(user.id, products); 
     expect(result).toBe(true);
   });
+  it("definir produtos em usuário inexistente", () => {
+    const productA = new Product({
+      name: "Produto A",
+      price: 100,
+      quantity: 10,
+    });
+    const products = [productA];
+    const result = userManager.setUserProducts("usuario", products); 
+    expect(result).toBe(false);
+  });
 });
