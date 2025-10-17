@@ -1,18 +1,13 @@
-import { randomUUID } from "node:crypto";
-import { IUser, UserDTO } from "./User";
+import { IUser, User, UserDTO } from "./User";
 
 export class UserManager {
   constructor(private users: IUser[] = []) {}
-  createUser(user: UserDTO) {
-    const _user = {
-      id: randomUUID(),
-      ...user,
-      products: [],
-    };
-    this.users.push(_user);
-    return _user;
+  createUser(userDTO: UserDTO) {
+    const newUser = new User(userDTO);
+    this.users.push(newUser);
+    return newUser;
   }
   getUsers() {
-    return this.users;
+    return [...this.users];
   }
 }
