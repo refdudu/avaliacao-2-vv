@@ -1,13 +1,14 @@
 import { UserNotFoundError } from "./errors/UserNotFoundError";
 import { normalizeString } from "./normalizeString";
-import { IUser, User, UserDTO } from "./User";
+import { Product } from "./Product";
+import { User, UserDTO } from "./User";
 
 interface GetUserFilter {
   name?: string;
 }
 
 export class UserManager {
-  constructor(private users: IUser[] = []) { }
+  constructor(private users: User[] = []) {}
 
   createUser(userDTO: UserDTO) {
     const newUser = new User(userDTO);
@@ -15,7 +16,7 @@ export class UserManager {
     return newUser;
   }
 
-  getUsers({ name }: GetUserFilter = {}): IUser[] {
+  getUsers({ name }: GetUserFilter = {}): User[] {
     if (!name) {
       return [...this.users];
     }
@@ -34,6 +35,16 @@ export class UserManager {
     try {
       this.getUserById(userId);
       this.users = this.getUsers().filter(({ id }) => id !== userId);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  setUserProducts(userId: string, products: Product[]) {
+    try {
+      const user = this.getUserById(userId);
+      user.setProducts(products);
       return true;
     } catch {
       return false;

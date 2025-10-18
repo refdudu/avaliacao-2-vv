@@ -18,4 +18,8 @@ export class User implements IUser {
     this.name = user.name;
     this.products = [];
   }
+  setProducts(products: IProduct[]) {
+    this.products = products;
+  }
+
 }

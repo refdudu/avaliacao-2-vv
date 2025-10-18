@@ -1,3 +1,4 @@
+import { Product } from "./Product";
 import { UserDTO } from "./User";
 import { UserManager } from "./UserManager";
 
@@ -43,6 +44,27 @@ describe("Gerenciamento de usuários", () => {
   });
   it("deve tentar deletar um usuário inexistente", () => {
     const result = userManager.deleteUser("non-existent-id");
+    expect(result).toBe(false);
+  });
+  it("definir produtos no usuário", () => {
+    const productA = new Product({
+      name: "Produto A",
+      price: 100,
+      quantity: 10,
+    });
+    const products = [productA];
+    const user = userManager.createUser({ name: "Usuário A" });
+    const result = userManager.setUserProducts(user.id, products); 
+    expect(result).toBe(true);
+  });
+  it("definir produtos em usuário inexistente", () => {
+    const productA = new Product({
+      name: "Produto A",
+      price: 100,
+      quantity: 10,
+    });
+    const products = [productA];
+    const result = userManager.setUserProducts("usuario", products); 
     expect(result).toBe(false);
   });
 });
