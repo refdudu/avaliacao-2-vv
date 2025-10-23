@@ -1,24 +1,24 @@
 import { randomUUID } from "node:crypto";
-import { IProduct } from "./Product";
+import { Product } from "./Product";
 
 export interface UserDTO {
   name: string;
 }
 export interface IUser extends UserDTO {
   id: string;
-  products: IProduct[];
+  products: Product[];
 }
 export class User implements IUser {
   id: string;
   name: string;
-  products: IProduct[];
+  products: Product[];
 
   constructor(user: UserDTO) {
     this.id = randomUUID();
     this.name = user.name;
     this.products = [];
   }
-  setProducts(products: IProduct[]) {
+  setProducts(products: Product[]) {
     this.products = products;
   }
 
