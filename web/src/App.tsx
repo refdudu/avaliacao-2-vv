@@ -4,46 +4,72 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import type { IUser, UserDTO } from "./interfaces/User";
 import { type IProduct } from "./interfaces/Product";
+import { userService } from "./services/userService";
+import { useDebounce } from "./utils/useDebounce";
 
 function App() {
   const [users, setUsers] = useState<IUser[]>([]);
-  const [isCreatingUser, setIsCreatingUser] = useState(false);
+
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const selectedUser = users.find((user) => user.id === selectedUserId) || null;
 
-  const getUsers = () => {};
-  const handleCreateUser = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
+  const getUsers = async (name: string) => {
+    try {
+      const data = await userService.getUsers(name);
+      setUsers(data);
+    } catch {
+      alert("Error fetching users");
+    }
+  };
 
-    const userDTO: UserDTO = {
-      name: name,
-    };
-    setUsers([
-      ...users,
-      { id: String(users.length + 1), ...userDTO, products: [] },
-    ]);
-    setIsCreatingUser(false);
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const formData = new FormData(e.currentTarget);
+      const name = formData.get("name") as string;
+      if (!name) {
+        alert("Nome do usuário é obrigatório");
+        return;
+      }
+
+      const userDTO: UserDTO = {
+        name: name,
+      };
+      const newUser = await userService.createUser(userDTO);
+      setUsers([...users, newUser]);
+    } catch (e) {
+      alert(JSON.stringify(e, null, 4));
+    }
+  };
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await userService.deleteUser(userId);
+      setUsers((p) => p.filter((user) => user.id !== userId));
+      if (selectedUserId === userId) {
+        setSelectedUserId(null);
+      }
+    } catch (e) {
+      alert(JSON.stringify(e, null, 4));
+    }
   };
 
   useEffect(() => {
-    getUsers();
+    getUsers("");
   }, []);
 
   return (
     <div className="flex min-h-screen bg-linear-to-br from-blue-400 via-cyan-500 to-indigo-600">
       <UserSidebar
         {...{
-          isCreatingUser,
           selectedUser,
-          setIsCreatingUser,
           setSelectedUser: setSelectedUserId,
           users,
           handleCreateUser,
+          handleDeleteUser,
+          getUsers,
         }}
       />
       <ProductMain
@@ -68,73 +94,142 @@ const UserSidebar = ({
   users,
   selectedUser,
   setSelectedUser,
-  isCreatingUser,
-  setIsCreatingUser,
   handleCreateUser,
+  handleDeleteUser,
+  getUsers,
 }: {
   users: IUser[];
   selectedUser: IUser | null;
   setSelectedUser: (userId: string) => void;
-  isCreatingUser: boolean;
-  setIsCreatingUser: (isCreating: boolean) => void;
-  handleCreateUser: (e: React.FormEvent<HTMLFormElement>) => void;
-}) => (
-  <aside className="w-96 bg-white/90 backdrop-blur-sm shadow-xl p-6 border-r border-white/20 flex flex-col gap-6">
-    <header className="flex items-center gap-4 justify-between">
-      <h2 className="text-3xl font-bold text-blue-800 text-center">Usuários</h2>
-      <button
-        onClick={() => setIsCreatingUser(true)}
-        className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-      >
-        <PlusIcon size={24} />
-      </button>
-    </header>
-    <div className="">
-      <input
-        type="text"
-        className="w-full border-2 border-blue-300 p-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 bg-white/80"
-        placeholder="Digite o nome do usuário"
-      />
-    </div>
-    <main>
-      <ul className="space-y-3">
-        {users.map((user) => {
-          const isSelected = selectedUser?.id === user.id;
-          return (
-            <li key={user.id}>
-              <button
-                className={`w-full text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-102 ${
-                  isSelected
-                    ? "bg-blue-200 text-blue-900 font-bold shadow-lg border-2 border-blue-400"
-                    : "text-gray-800 hover:bg-blue-100 hover:shadow-md border border-gray-200"
-                }`}
-                onClick={() => setSelectedUser(user.id)}
-              >
-                {user.name}
-              </button>
-            </li>
-          );
-        })}
-        {isCreatingUser && (
-          <li className="p-4 bg-cyan-100 rounded-xl border-2 border-cyan-300">
-            <form onSubmit={handleCreateUser} className="flex gap-3">
-              <input
-                name="name"
-                className="flex-1 border-2 border-cyan-400 p-3 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 bg-white"
-              />
-              <button
-                type="submit"
-                className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                <CheckIcon size={24} />
-              </button>
-            </form>
-          </li>
-        )}
-      </ul>
-    </main>
-  </aside>
-);
+  handleCreateUser: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  handleDeleteUser: (userId: string) => void;
+  getUsers: (name: string) => void;
+}) => {
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const ref = useRef<HTMLLIElement>(null);
+  const [userName, setUserName] = useState("");
+  const debouncedUserName = useDebounce(userName);
+
+  const closeIsCreatingUser = () => setIsCreatingUser(false);
+  const openIsCreatingUser = () => setIsCreatingUser(true);
+
+  const _handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    await handleCreateUser(e);
+    closeIsCreatingUser();
+  };
+
+  useEffect(() => {
+    if (!isCreatingUser) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setIsCreatingUser(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCreatingUser]);
+
+  const handleGetUsers = () => getUsers(userName);
+  useEffect(() => {
+    handleGetUsers();
+  }, [debouncedUserName]);
+
+  return (
+    <aside className="w-96 bg-white/90 backdrop-blur-sm shadow-xl p-6 border-r border-white/20 flex flex-col gap-6">
+      <header className="flex items-center gap-4 justify-between">
+        <h2
+          onDoubleClick={handleGetUsers}
+          className="text-3xl font-bold text-blue-800 text-center"
+        >
+          Usuários
+        </h2>
+        <button
+          onClick={openIsCreatingUser}
+          className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <PlusIcon size={24} />
+        </button>
+      </header>
+      <div className="">
+        <input
+          onChange={(e) => setUserName(e.currentTarget.value)}
+          value={userName}
+          type="text"
+          className="w-full border-2 border-blue-300 p-3 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-400 bg-white/80"
+          placeholder="Digite o nome do usuário"
+        />
+      </div>
+      <main>
+        <ul className="space-y-3">
+          {users.map((user) => {
+            const isSelected = selectedUser?.id === user.id;
+            return (
+              <li key={user.id} className="w-full flex items-center gap-4">
+                <button
+                  className={`flex-1 text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-102 ${
+                    isSelected
+                      ? "bg-blue-200 text-blue-900 font-bold shadow-lg border-2 border-blue-400"
+                      : "text-gray-800 hover:bg-blue-100 hover:shadow-md border border-gray-200"
+                  }`}
+                  onClick={() => setSelectedUser(user.id)}
+                >
+                  {user.name}
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(user.id)}
+                  className="bg-red-500 text-white w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+                >
+                  <TrashIcon size={20} />
+                </button>
+              </li>
+            );
+          })}
+          {isCreatingUser && (
+            <CreateUserCard
+              ref={ref}
+              {...{ handleCreateUser: _handleCreateUser }}
+            />
+          )}
+        </ul>
+      </main>
+    </aside>
+  );
+};
+const CreateUserCard = React.forwardRef<
+  HTMLLIElement,
+  {
+    handleCreateUser: (e: React.FormEvent<HTMLFormElement>) => void;
+  }
+>(({ handleCreateUser }, ref) => {
+  return (
+    <li
+      ref={ref}
+      className="p-4 bg-cyan-100 rounded-xl border-2 border-cyan-300"
+    >
+      <form onSubmit={handleCreateUser} className="flex gap-3">
+        <input
+          type="text"
+          placeholder="Nome do usuário"
+          required
+          autoFocus
+          name="name"
+          className="flex-1 border-2 border-cyan-400 p-3 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 bg-white"
+        />
+        <button
+          type="submit"
+          className="bg-green-500 text-white p-3 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <CheckIcon size={24} />
+        </button>
+      </form>
+    </li>
+  );
+});
 
 const ProductMain = ({
   selectedUser,
