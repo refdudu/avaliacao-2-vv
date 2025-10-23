@@ -2,7 +2,6 @@ import express, { NextFunction, Request, Response } from "express";
 import { UserManager } from "./UserManager";
 import { User, UserDTO } from "./User";
 import cors from "cors";
-import { Product, ProductDTO } from "./Product";
 import { InventoryManager } from "./InventoryManager";
 
 const app = express();
@@ -34,8 +33,8 @@ userRouter.delete("/:userId", (req, res) => {
   userManager.deleteUser(userId);
   res.status(200).json({ message: "User deleted successfully" });
 });
+app.use("/api/users", userRouter);
 
-const userProductRouter = express.Router();
 export interface CustomRequestProps {
   user: User;
   inventoryManager: InventoryManager;
@@ -47,7 +46,6 @@ const userProductMiddleware = (
   next: NextFunction
 ) => {
   const { userId } = req.params;
-
   try {
     const user = userManager.getUserById(userId);
     const inventoryManager = new InventoryManager(user.products);
@@ -56,11 +54,14 @@ const userProductMiddleware = (
     (req as CustomRequest<{}>).inventoryManager = inventoryManager;
     next();
   } catch (error) {
+    console.error(error);
     res.status(404).json({ error: "User not found" });
   }
 };
-app.use("/api/users", userRouter);
 
+const userProductRouter = express.Router({
+  mergeParams: true,
+});
 userProductRouter.use(userProductMiddleware);
 userProductRouter.post("/", (req, res) => {
   const _req = req as CustomRequest<{}>;

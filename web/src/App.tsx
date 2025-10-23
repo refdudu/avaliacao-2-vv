@@ -9,6 +9,7 @@ import type { IUser, UserDTO } from "./interfaces/User";
 import { type IProduct } from "./interfaces/Product";
 import { userService } from "./services/userService";
 import { useDebounce } from "./utils/useDebounce";
+import { userProductService } from "./services/userProductService";
 
 function App() {
   const [users, setUsers] = useState<IUser[]>([]);
@@ -55,10 +56,6 @@ function App() {
       alert(JSON.stringify(e, null, 4));
     }
   };
-
-  useEffect(() => {
-    getUsers("");
-  }, []);
 
   return (
     <div className="flex min-h-screen bg-linear-to-br from-blue-400 via-cyan-500 to-indigo-600">
@@ -135,6 +132,7 @@ const UserSidebar = ({
   }, [isCreatingUser]);
 
   const handleGetUsers = () => getUsers(userName);
+  
   useEffect(() => {
     handleGetUsers();
   }, [debouncedUserName]);
@@ -241,39 +239,51 @@ const ProductMain = ({
   const userProducts = selectedUser ? selectedUser.products : [];
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
 
-  const handleCreateProduct = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!selectedUser) return;
+
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     const price = parseFloat(formData.get("price") as string);
     const quantity = parseInt(formData.get("quantity") as string, 10);
 
-    const newProduct: IProduct = {
-      id: String(userProducts.length + 1),
+    const products = await userProductService.createProduct(selectedUser.id, {
       name,
       price,
       quantity,
-    };
-    changeProducts([...userProducts, newProduct]);
+    });
+    changeProducts(products);
     setIsCreatingProduct(false);
   };
 
-  const removeProduct = (product: IProduct) => {
-    changeProducts([...userProducts].filter((item) => item.id !== product.id));
+  const removeProduct = async (product: IProduct) => {
+    if (!selectedUser) return;
+    try {
+      const products = await userProductService.deleteProduct(
+        selectedUser.id,
+        product.id
+      );
+      changeProducts(products);
+    } catch {}
   };
-  const addProductQuantity = (product: IProduct): void => {
-    updateProductQuantity(product, product.quantity + 1);
-  };
-  const removeProductQuantity = (product: IProduct): void => {
-    updateProductQuantity(product, product.quantity - 1);
-  };
-  const updateProductQuantity = (product: IProduct, quantity: number): void => {
-    changeProducts(
-      [...userProducts].map((item) =>
-        item.id === product.id ? { ...item, quantity } : item
-      )
+  const addProductQuantity = async (product: IProduct) => {
+    if (!selectedUser) return;
+    const products = await userProductService.addProductQuantity(
+      selectedUser.id,
+      product.id
     );
+    changeProducts(products);
   };
+  const removeProductQuantity = async (product: IProduct) => {
+    if (!selectedUser) return;
+    const products = await userProductService.removeProductQuantity(
+      selectedUser.id,
+      product.id
+    );
+    changeProducts(products);
+  };
+
   return (
     <main className="flex-1 p-6">
       <header className="flex items-center justify-between mb-8 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20">
@@ -286,12 +296,17 @@ const ProductMain = ({
         <span className="text-lg font-semibold text-blue-700 bg-blue-100 px-4 py-2 rounded-full">
           Total: {userProducts.length}
         </span>
-        <button
-          onClick={() => setIsCreatingProduct(true)}
-          className="bg-linear-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-cyan-500 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
-        >
-          Criar produto <PlusIcon size={20} />
-        </button>
+        <div>
+          {selectedUser && (
+            <button
+              onClick={() => setIsCreatingProduct(true)}
+              disabled={!selectedUser}
+              className="bg-linear-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-cyan-500 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+            >
+              Criar produto <PlusIcon size={20} />
+            </button>
+          )}
+        </div>
       </header>
       <div className="space-y-4">
         {isCreatingProduct && (
