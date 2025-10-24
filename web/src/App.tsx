@@ -4,104 +4,45 @@ import {
   PlusIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
-import React, { useEffect, useRef, useState } from "react";
-import type { IUser, UserDTO } from "./interfaces/User";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  type ButtonHTMLAttributes,
+} from "react";
+import type { IUser } from "./interfaces/User";
 import { type IProduct } from "./interfaces/Product";
-import { userService } from "./services/userService";
-import { useDebounce } from "./utils/useDebounce";
-import { userProductService } from "./services/userProductService";
+import { useDebounce } from "./hooks/useDebounce";
+import { useClickoutSide } from "./hooks/useClickoutSide";
+import { useProductMain } from "./hooks/useProductMain";
+import { useUsers } from "./hooks/useUsers";
 
 function App() {
-  const [users, setUsers] = useState<IUser[]>([]);
-
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const selectedUser = users.find((user) => user.id === selectedUserId) || null;
-
-  const getUsers = async (name: string) => {
-    try {
-      const data = await userService.getUsers(name);
-      setUsers(data);
-    } catch {
-      alert("Error fetching users");
-    }
-  };
-
-  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      const formData = new FormData(e.currentTarget);
-      const name = formData.get("name") as string;
-      if (!name) {
-        alert("Nome do usuário é obrigatório");
-        return;
-      }
-
-      const userDTO: UserDTO = {
-        name: name,
-      };
-      const newUser = await userService.createUser(userDTO);
-      setUsers([...users, newUser]);
-    } catch (e) {
-      alert(JSON.stringify(e, null, 4));
-    }
-  };
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      await userService.deleteUser(userId);
-      setUsers((p) => p.filter((user) => user.id !== userId));
-      if (selectedUserId === userId) {
-        setSelectedUserId(null);
-      }
-    } catch (e) {
-      alert(JSON.stringify(e, null, 4));
-    }
-  };
-
+  const userUtils = useUsers();
   return (
     <div className="flex min-h-screen bg-linear-to-br from-blue-400 via-cyan-500 to-indigo-600">
-      <UserSidebar
-        {...{
-          selectedUser,
-          setSelectedUser: setSelectedUserId,
-          users,
-          handleCreateUser,
-          handleDeleteUser,
-          getUsers,
-        }}
-      />
-      <ProductMain
-        {...{
-          selectedUser,
-          changeProducts: (products: IProduct[]) => {
-            if (selectedUser) {
-              setUsers((prev) =>
-                prev.map((user) =>
-                  user.id === selectedUser.id ? { ...user, products } : user
-                )
-              );
-            }
-          },
-        }}
-      />
+      <UserSidebar {...userUtils} />
+      <ProductMain {...userUtils} />
     </div>
   );
 }
 
-const UserSidebar = ({
-  users,
-  selectedUser,
-  setSelectedUser,
-  handleCreateUser,
-  handleDeleteUser,
-  getUsers,
-}: {
+interface UserSidebarProps {
   users: IUser[];
   selectedUser: IUser | null;
-  setSelectedUser: (userId: string) => void;
+  setSelectedUserId: (userId: string) => void;
   handleCreateUser: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   handleDeleteUser: (userId: string) => void;
   getUsers: (name: string) => void;
-}) => {
+}
+const UserSidebar = ({
+  users,
+  selectedUser,
+  setSelectedUserId: setSelectedUser,
+  handleCreateUser: _handleCreateUser,
+  handleDeleteUser,
+  getUsers,
+}: UserSidebarProps) => {
   const [isCreatingUser, setIsCreatingUser] = useState(false);
   const ref = useRef<HTMLLIElement>(null);
   const [userName, setUserName] = useState("");
@@ -110,35 +51,21 @@ const UserSidebar = ({
   const closeIsCreatingUser = () => setIsCreatingUser(false);
   const openIsCreatingUser = () => setIsCreatingUser(true);
 
-  const _handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
-    await handleCreateUser(e);
+  const handleCreateUser = async (e: React.FormEvent<HTMLFormElement>) => {
+    await _handleCreateUser(e);
     closeIsCreatingUser();
   };
 
-  useEffect(() => {
-    if (!isCreatingUser) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setIsCreatingUser(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isCreatingUser]);
-
   const handleGetUsers = () => getUsers(userName);
-  
+
   useEffect(() => {
     handleGetUsers();
   }, [debouncedUserName]);
 
+  useClickoutSide(isCreatingUser, closeIsCreatingUser, ref);
+
   return (
-    <aside className="w-96 bg-white/90 backdrop-blur-sm shadow-xl p-6 border-r border-white/20 flex flex-col gap-6">
+    <aside className="w-96 bg-white/90 backdrop-blur-sm shadow-xl p-6 border-r border-white/20 flex flex-col gap-6 h-screen overflow-y-auto">
       <header className="flex items-center gap-4 justify-between">
         <h2
           onDoubleClick={handleGetUsers}
@@ -167,37 +94,56 @@ const UserSidebar = ({
           {users.map((user) => {
             const isSelected = selectedUser?.id === user.id;
             return (
-              <li key={user.id} className="w-full flex items-center gap-4">
-                <button
-                  className={`flex-1 text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-102 ${
-                    isSelected
-                      ? "bg-blue-200 text-blue-900 font-bold shadow-lg border-2 border-blue-400"
-                      : "text-gray-800 hover:bg-blue-100 hover:shadow-md border border-gray-200"
-                  }`}
-                  onClick={() => setSelectedUser(user.id)}
-                >
-                  {user.name}
-                </button>
-                <button
-                  onClick={() => handleDeleteUser(user.id)}
-                  className="bg-red-500 text-white w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-                >
-                  <TrashIcon size={20} />
-                </button>
-              </li>
+              <UserCard
+                key={user.id}
+                {...{ user, isSelected, setSelectedUser, handleDeleteUser }}
+              />
             );
           })}
           {isCreatingUser && (
-            <CreateUserCard
-              ref={ref}
-              {...{ handleCreateUser: _handleCreateUser }}
-            />
+            <CreateUserCard ref={ref} {...{ handleCreateUser }} />
           )}
         </ul>
       </main>
     </aside>
   );
 };
+interface UserCardProps {
+  user: IUser;
+  isSelected: boolean;
+  setSelectedUser: (userId: string) => void;
+  handleDeleteUser: (userId: string) => void;
+}
+const UserCard = ({
+  user,
+  isSelected,
+  setSelectedUser,
+  handleDeleteUser,
+}: UserCardProps) => {
+  return (
+    <li key={user.id} className="w-full flex items-center gap-4">
+      <button
+        className={`flex-1 text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-102 ${
+          isSelected
+            ? "bg-blue-200 text-blue-900 font-bold shadow-lg border-2 border-blue-400"
+            : "text-gray-800 hover:bg-blue-100 hover:shadow-md border border-gray-200"
+        }`}
+        onClick={() => setSelectedUser(user.id)}
+      >
+        {user.name}
+      </button>
+      <DeleteButton onClick={() => handleDeleteUser(user.id)} />
+    </li>
+  );
+};
+const DeleteButton = (props: ButtonHTMLAttributes<HTMLButtonElement>) => (
+  <button
+    {...props}
+    className="bg-red-500 text-white w-10 h-10 flex items-center justify-center rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+  >
+    <TrashIcon size={20} />
+  </button>
+);
 const CreateUserCard = React.forwardRef<
   HTMLLIElement,
   {
@@ -229,63 +175,29 @@ const CreateUserCard = React.forwardRef<
   );
 });
 
-const ProductMain = ({
-  selectedUser,
-  changeProducts,
-}: {
+export interface ProductMainProps {
   selectedUser: IUser | null;
   changeProducts: (products: IProduct[]) => void;
-}) => {
+}
+const ProductMain = (props: ProductMainProps) => {
+  const { selectedUser } = props;
   const userProducts = selectedUser ? selectedUser.products : [];
+
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const closeCreatingProduct = () => setIsCreatingProduct(false);
 
-  const handleCreateProduct = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!selectedUser) return;
+  const {
+    removeProduct,
+    addProductQuantity,
+    removeProductQuantity,
+    handleCreateProduct,
+  } = useProductMain({ ...props, closeCreatingProduct });
 
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const price = parseFloat(formData.get("price") as string);
-    const quantity = parseInt(formData.get("quantity") as string, 10);
-
-    const products = await userProductService.createProduct(selectedUser.id, {
-      name,
-      price,
-      quantity,
-    });
-    changeProducts(products);
-    setIsCreatingProduct(false);
-  };
-
-  const removeProduct = async (product: IProduct) => {
-    if (!selectedUser) return;
-    try {
-      const products = await userProductService.deleteProduct(
-        selectedUser.id,
-        product.id
-      );
-      changeProducts(products);
-    } catch {}
-  };
-  const addProductQuantity = async (product: IProduct) => {
-    if (!selectedUser) return;
-    const products = await userProductService.addProductQuantity(
-      selectedUser.id,
-      product.id
-    );
-    changeProducts(products);
-  };
-  const removeProductQuantity = async (product: IProduct) => {
-    if (!selectedUser) return;
-    const products = await userProductService.removeProductQuantity(
-      selectedUser.id,
-      product.id
-    );
-    changeProducts(products);
-  };
+  useClickoutSide(isCreatingProduct, closeCreatingProduct, ref);
 
   return (
-    <main className="flex-1 p-6">
+    <main className="flex-1 p-6 h-screen overflow-y-auto">
       <header className="flex items-center justify-between mb-8 bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20">
         <h2 className="text-2xl font-bold text-indigo-800">
           Produtos do Usuário:{" "}
@@ -310,7 +222,10 @@ const ProductMain = ({
       </header>
       <div className="space-y-4">
         {isCreatingProduct && (
-          <CreateProductCard handleCreateProduct={handleCreateProduct} />
+          <CreateProductCard
+            ref={ref}
+            handleCreateProduct={handleCreateProduct}
+          />
         )}
         {userProducts.map((product) => (
           <ProductCard
@@ -326,35 +241,32 @@ const ProductMain = ({
   );
 };
 
-const CreateProductCard = ({
-  handleCreateProduct,
-}: {
-  handleCreateProduct: (e: React.FormEvent<HTMLFormElement>) => void;
-}) => {
+const CreateProductCard = React.forwardRef<
+  HTMLDivElement,
+  { handleCreateProduct: (e: React.FormEvent<HTMLFormElement>) => void }
+>(({ handleCreateProduct }, ref) => {
   return (
-    <div className="bg-cyan-100 p-6 rounded-2xl border-2 border-cyan-300 shadow-lg">
+    <div
+      ref={ref}
+      className="bg-cyan-100 p-6 rounded-2xl border-2 border-cyan-300 shadow-lg"
+    >
       <form onSubmit={handleCreateProduct} className="flex gap-4 flex-wrap">
-        <input
+        <ProductCardInput
+          autoFocus
           name="name"
           type="text"
           placeholder="Nome do produto"
-          className="flex-1 border-2 border-cyan-400 p-3 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 bg-white"
-          required
         />
-        <input
+        <ProductCardInput
           name="price"
           type="number"
           step="0.01"
           placeholder="Preço"
-          className="flex-1 border-2 border-cyan-400 p-3 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 bg-white"
-          required
         />
-        <input
+        <ProductCardInput
           name="quantity"
           type="number"
           placeholder="Quantidade"
-          className="flex-1 border-2 border-cyan-400 p-3 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 bg-white"
-          required
         />
         <button
           type="submit"
@@ -365,24 +277,33 @@ const CreateProductCard = ({
       </form>
     </div>
   );
+});
+const ProductCardInput = (
+  props: React.InputHTMLAttributes<HTMLInputElement>
+) => {
+  return (
+    <input
+      {...props}
+      required
+      className="flex-1 border-2 border-cyan-400 p-3 rounded-lg focus:outline-none focus:ring-4 focus:ring-cyan-400 bg-white"
+    />
+  );
 };
 
+interface ProductCardProps {
+  product: IProduct;
+  handleDelete: () => void;
+  addChangeQuantity: () => void;
+  removeChangeQuantity: () => void;
+}
 const ProductCard = ({
   product,
   addChangeQuantity,
   removeChangeQuantity,
   handleDelete,
-}: {
-  product: IProduct;
-  handleDelete: () => void;
-  addChangeQuantity: () => void;
-  removeChangeQuantity: () => void;
-}) => {
+}: ProductCardProps) => {
   return (
-    <div
-      key={product.id}
-      className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 flex items-center justify-between hover:shadow-2xl transition-all duration-300 transform hover:scale-102"
-    >
+    <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 flex items-center justify-between hover:shadow-2xl transition-all duration-300 transform hover:scale-102">
       <h3 className="text-xl font-semibold text-gray-800">{product.name}</h3>
       <p className="text-lg text-blue-600 font-bold bg-blue-100 px-4 py-2 rounded-full">
         Preço: R$ {product.price.toFixed(2)}
@@ -391,8 +312,8 @@ const ProductCard = ({
         <span className="text-gray-700 font-medium">Quantidade:</span>
         <div className="flex items-center gap-2 bg-gray-100 p-2 rounded-xl">
           <button
-            onClick={() => removeChangeQuantity()}
-            className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+            onClick={removeChangeQuantity}
+            className="bg-red-500 text-white h-10 w-10 flex items-center justify-center rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             <MinusIcon size={20} />
           </button>
@@ -400,19 +321,14 @@ const ProductCard = ({
             {product.quantity}
           </span>
           <button
-            onClick={() => addChangeQuantity()}
-            className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
+            onClick={addChangeQuantity}
+            className="bg-blue-500 text-white h-10 w-10 flex items-center justify-center rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             <PlusIcon size={20} />
           </button>
         </div>
       </div>
-      <button
-        onClick={handleDelete}
-        className="bg-red-500 text-white p-2 rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
-      >
-        <TrashIcon size={20} />
-      </button>
+      <DeleteButton onClick={handleDelete} />
     </div>
   );
 };

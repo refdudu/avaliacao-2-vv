@@ -16,13 +16,7 @@ const userManager = new UserManager();
 app.get("/users", (req, res) => {
   const { name } = req.query;
   const users = userManager.getUsers({ name: name as string });
-  res.json(
-    users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      products: user.products,
-    }))
-  );
+  res.json(users);
 });
 
 app.post("/users", (req, res) => {
