@@ -75,6 +75,7 @@ const UserSidebar = ({
         </h2>
         <button
           onClick={openIsCreatingUser}
+          aria-label="Adicionar usuário"
           className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           <PlusIcon size={24} />
@@ -121,7 +122,7 @@ const UserCard = ({
   handleDeleteUser,
 }: UserCardProps) => {
   return (
-    <li key={user.id} className="w-full flex items-center gap-4">
+    <li data-testid="user-card" key={user.id} className="w-full flex items-center gap-4">
       <button
         className={`flex-1 text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-102 ${
           isSelected
@@ -132,7 +133,10 @@ const UserCard = ({
       >
         {user.name}
       </button>
-      <DeleteButton onClick={() => handleDeleteUser(user.id)} />
+      <DeleteButton
+        aria-label="Deletar usuário"
+        onClick={() => handleDeleteUser(user.id)}
+      />
     </li>
   );
 };
@@ -153,6 +157,7 @@ const CreateUserCard = React.forwardRef<
   return (
     <li
       ref={ref}
+      data-testid="create-user-form"
       className="p-4 bg-cyan-100 rounded-xl border-2 border-cyan-300"
     >
       <form onSubmit={handleCreateUser} className="flex gap-3">
@@ -213,6 +218,7 @@ const ProductMain = (props: ProductMainProps) => {
             <button
               onClick={() => setIsCreatingProduct(true)}
               disabled={!selectedUser}
+              aria-label="Adicionar produto"
               className="bg-linear-to-r from-cyan-400 to-blue-500 text-white px-6 py-3 rounded-xl hover:from-cyan-500 hover:to-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
             >
               Criar produto <PlusIcon size={20} />
@@ -248,6 +254,7 @@ const CreateProductCard = React.forwardRef<
   return (
     <div
       ref={ref}
+      data-testid="create-product-form"
       className="bg-cyan-100 p-6 rounded-2xl border-2 border-cyan-300 shadow-lg"
     >
       <form onSubmit={handleCreateProduct} className="flex gap-4 flex-wrap">
@@ -303,7 +310,7 @@ const ProductCard = ({
   handleDelete,
 }: ProductCardProps) => {
   return (
-    <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 flex items-center justify-between hover:shadow-2xl transition-all duration-300 transform hover:scale-102">
+    <div data-testid="product-card" className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-xl border border-white/20 flex items-center justify-between hover:shadow-2xl transition-all duration-300 transform hover:scale-102">
       <h3 className="text-xl font-semibold text-gray-800">{product.name}</h3>
       <p className="text-lg text-blue-600 font-bold bg-blue-100 px-4 py-2 rounded-full">
         Preço: R$ {product.price.toFixed(2)}
@@ -313,6 +320,7 @@ const ProductCard = ({
         <div className="flex items-center gap-2 bg-gray-100 p-2 rounded-xl">
           <button
             onClick={removeChangeQuantity}
+            aria-label="Remover quantidade"
             className="bg-red-500 text-white h-10 w-10 flex items-center justify-center rounded-lg hover:bg-red-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             <MinusIcon size={20} />
@@ -322,13 +330,14 @@ const ProductCard = ({
           </span>
           <button
             onClick={addChangeQuantity}
+            aria-label="Adicionar quantidade"
             className="bg-blue-500 text-white h-10 w-10 flex items-center justify-center rounded-lg hover:bg-blue-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
           >
             <PlusIcon size={20} />
           </button>
         </div>
       </div>
-      <DeleteButton onClick={handleDelete} />
+      <DeleteButton aria-label="Deletar produto" onClick={handleDelete} />
     </div>
   );
 };

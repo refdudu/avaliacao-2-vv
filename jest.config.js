@@ -16,7 +16,20 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/coverage/",
+    "server.ts",
+    "/e2e/",
+  ],
+  coveragePathIgnorePatterns: [
+    "/node_modules/",
+    "/coverage/",
+    "server.ts",
+    "/e2e/",
+  ],
 
+  // Ignora o server.ts no relatório de cobertura
   // Configuração opcional para coletar a cobertura de testes
   collectCoverage: true,
   coverageDirectory: "coverage",
