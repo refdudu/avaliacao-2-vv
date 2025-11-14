@@ -9,6 +9,10 @@ app.use(express.json());
 app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
+app.get("/", (req, res) => {
+  res.status(200).send("API is running");
+});
+
 const userManager = new UserManager();
 
 const userRouter = express.Router();
