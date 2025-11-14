@@ -60,6 +60,7 @@ const UserSidebar = ({
 
   useEffect(() => {
     handleGetUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedUserName]);
 
   useClickoutSide(isCreatingUser, closeIsCreatingUser, ref);

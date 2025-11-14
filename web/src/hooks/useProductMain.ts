@@ -22,7 +22,9 @@ export const useProductMain = ({
         product.id
       );
       changeProducts(products);
-    } catch {}
+    } catch {
+        alert("Erro ao deltar produto");
+    }
   };
 
   const addProductQuantity = async (product: IProduct) => {
